@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="linear_control" type="linear_control_client.py" name="linear_control_client" />
+  <node pkg="scara_control" type="scara_control_client1.py" name="scara_control_client1" />
+  <node pkg="scara_control" type="scara_control_client2.py" name="scara_control_client2" />
+  <node pkg="robot_test" type="baesong_run" name="baesong_run" />
+  <node pkg="joy" type="joy_node" name="joy_node" />
+</launch>
