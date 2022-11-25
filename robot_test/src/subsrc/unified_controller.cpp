@@ -33,8 +33,6 @@ CUController::CUController() //calc global position, implement fsm
         _check_table[i] == false;
     }
 
-    
-
     _task_state = 2;
 	_task_tray_cmd = 0;
 	_pre_tray_cmd = 0;
@@ -70,7 +68,7 @@ void CUController::Finite_State_Machine( int button, float axes1, float axes2, d
 		_q_goal_backward[2] = 10.0*DEG2RAD; //q2
 		_height_goal_linear = 0.57; //z 
         _bool_ee_control = false; //joint control
-        _operation_time = 10.0; 
+        _operation_time = 6.0; 
         // read_state_deg(_q_goal_forward);
         
         for(int i=0; i<16; i++)
@@ -104,7 +102,7 @@ void CUController::Finite_State_Machine( int button, float axes1, float axes2, d
 
         if( button == 1)
         {
-            _operation_time = 10.0;
+            _operation_time = 7.0;
         
 		    if(time < _init_time + _operation_time)            
             {
@@ -149,7 +147,7 @@ void CUController::Finite_State_Machine( int button, float axes1, float axes2, d
              cout << "Test Motion 1" <<endl;
              _CurrentTask = Test_Task;
              //_CurrentState = Back_Table_Lane;
-             _task_tray_cmd = 2;
+             _task_tray_cmd = 3;
              _init_time = time;      
              _PreviousState = Ready;
         }
@@ -253,7 +251,7 @@ void CUController::Finite_State_Machine( int button, float axes1, float axes2, d
         */
 
 		// Scara_forward.calc_iversekinematics( -0.10, 0.20, 180.0*DEG2RAD); //solve IK to get _q[1]~[3]
-        Scara_forward.calc_iversekinematics( -0.047, -0.648, -135.0*DEG2RAD); //solve IK to get _q[1]~[3]
+        Scara_forward.calc_iversekinematics( 0.17, -0.74, -90.0*DEG2RAD); //solve IK to get _q[1]~[3]
 		_q_goal_forward[0] = Scara_forward._x_ee_goal_local[0];
         _q_goal_forward[1] = Scara_forward._x_ee_goal_local[1];
         _q_goal_forward[2] = Scara_forward._x_ee_goal_local[2];
@@ -280,7 +278,48 @@ void CUController::Finite_State_Machine( int button, float axes1, float axes2, d
      // Front Table lane
     else if(_CurrentState == Front_Table_Lane)
     {
-        _operation_time = 10.0;
+        if(_PreviousState == Ready)
+            {
+                if(_task_tray_cmd == 1)
+                {
+                    _operation_time = 8.0;
+                }
+                else if(_task_tray_cmd == 2)
+                {
+                    _operation_time = 6.0;
+                }
+                else if(_task_tray_cmd == 3)
+                {
+                    _operation_time = 6.0;
+                }
+                else if(_task_tray_cmd == 4)
+                {
+                    _operation_time = 9.0;
+                }
+                else if(_task_tray_cmd == 5)
+                {
+                    _operation_time = 10.0;
+                }
+                else if(_task_tray_cmd == 6)
+                {
+                    _operation_time = 8.0;
+                }
+                else if(_task_tray_cmd == 7)
+                {
+                    _operation_time = 5.0;
+                }
+                else if(_task_tray_cmd == 8)
+                {
+                    _operation_time = 10.0;
+                }
+            }
+
+            else if(_PreviousState == Item_Move)
+            {
+                _operation_time = 1.0;
+            }
+
+        //_operation_time = 8.0;
         
 		if(time < _init_time + _operation_time)
         {
@@ -314,13 +353,13 @@ void CUController::Finite_State_Machine( int button, float axes1, float axes2, d
      // Front Table
     else if(_CurrentState == Front_Table)
     {
-        _operation_time = 5.0; 
+        _operation_time = 1.0; 
 
         if(time >= _init_time && time < _init_time + _operation_time)
         {
 		    boxlane_table_desired(_task_tray_cmd);
         }       
-        else if(time >= _init_time + _operation_time + 3.0)
+        else if(time >= _init_time + _operation_time)// + 3.0)
         {
             if(_CurrentTask == Test_Task)
             {
@@ -519,7 +558,50 @@ else if(_CurrentState == Item_Move)
     // Drop Lane
     else if(_CurrentState == Drop_Lane)
     {
-        _operation_time = 10.0;
+        if(_PreviousState == Front_Table_Lane)
+            {
+                if(_task_tray_cmd == 1)
+                {
+                    _operation_time = 6.0;
+                }
+                else if(_task_tray_cmd == 2)
+                {
+                    _operation_time = 5.5;
+                }
+                else if(_task_tray_cmd == 3)
+                {
+                    _operation_time = 5.5;
+                }
+                else if(_task_tray_cmd == 4)
+                {
+                    _operation_time = 5.5;
+                }
+                else if(_task_tray_cmd == 5)
+                {
+                    _operation_time = 6.0;
+                }
+                else if(_task_tray_cmd == 6)
+                {
+                    _operation_time = 8.0;
+                }
+                else if(_task_tray_cmd == 7)
+                {
+                    _operation_time = 5.0;
+                }
+                else if(_task_tray_cmd == 8)
+                {
+                    _operation_time = 6.0;
+                }
+            }
+
+            else if(_PreviousState == Item_Move)
+            {
+                _operation_time = 2.0;
+            }
+            
+
+        
+        //_operation_time = 10.0;
         
 		if(time < _init_time + _operation_time)
         {
@@ -529,9 +611,23 @@ else if(_CurrentState == Item_Move)
 		        //_q_goal_forward[1] = -20.0*DEG2RAD; //q1
 		        //_q_goal_forward[2] = -87.0*DEG2RAD; //q2
 
-                _q_goal_forward[0] = -18.0*DEG2RAD; //q0
-		        _q_goal_forward[1] = -90.0*DEG2RAD; //q1
-		        _q_goal_forward[2] = -25.0*DEG2RAD; //q2
+                //_q_goal_forward[0] = -18.0*DEG2RAD; //q0 For Test
+		        //_q_goal_forward[1] = -90.0*DEG2RAD; //q1
+		        //_q_goal_forward[2] = -25.0*DEG2RAD; //q2
+                
+
+
+                // if(_q_goal_forward[0] == -9.12*DEG2RAD && _q_goal_forward[1] == 147.43*DEG2RAD && _q_goal_forward[2] = 41.97*DEG2RAD)
+                // {
+                //     _q_goal_forward[0] = 30.0*DEG2RAD; //q0
+		        //     _q_goal_forward[1] = -135.0*DEG2RAD; //q1
+		        //     _q_goal_forward[2] = 15.0*DEG2RAD; //q2
+		        //     _height_goal_linear = 1.45 - 1.187;
+                // }
+
+                _q_goal_forward[0] = 30.0*DEG2RAD; //q0
+		        _q_goal_forward[1] = -135.0*DEG2RAD; //q1
+		        _q_goal_forward[2] = 15.0*DEG2RAD; //q2
 		        _height_goal_linear = 1.45 - 1.187;
 
                 Scara_forward.write_cmd_from_FSM(_operation_time, _q_goal_forward, _x_goal_forward, _bool_ee_control);
@@ -551,9 +647,13 @@ else if(_CurrentState == Item_Move)
             }
             else if(_PreviousState == Item_Move)
             {
-                _q_goal_forward[0] = -18.0*DEG2RAD; //q0
-		        _q_goal_forward[1] = -90.0*DEG2RAD; //q1
-		        _q_goal_forward[2] = -25.0*DEG2RAD; //q2
+                //_q_goal_forward[0] = -18.0*DEG2RAD; //q0 for test
+		        //_q_goal_forward[1] = -90.0*DEG2RAD; //q1
+		        //_q_goal_forward[2] = -25.0*DEG2RAD; //q2
+                
+                _q_goal_forward[0] = 30.0*DEG2RAD; //q0
+		        _q_goal_forward[1] = -135.0*DEG2RAD; //q1
+		        _q_goal_forward[2] = 15.0*DEG2RAD; //q2
 		        _height_goal_linear = 1.45 - 1.187;
 
                 Scara_forward.write_cmd_from_FSM(_operation_time, _q_goal_forward, _x_goal_forward, _bool_ee_control);
@@ -606,27 +706,33 @@ else if(_CurrentState == Item_Move)
     // Drop Point
     else if(_CurrentState == Drop_Point)
     {
-        _operation_time = 5.0;
+        _operation_time = 2.0;
         if(time < _init_time + _operation_time)
         {
             if(_PreviousState == Front_Table_Lane)
             {
-                Scara_forward.calc_iversekinematics( _target_position_from_vision[0], _target_position_from_vision[1], -135.0*DEG2RAD);
+                Scara_forward.calc_iversekinematics( _target_position_from_vision[0], _target_position_from_vision[1], -90.0*DEG2RAD);
                 //Scara_forward.calc_iversekinematics( -0.08, -0.63, -135.0*DEG2RAD); //solve IK to get _q[1]~[3]
+                //Scara_forward.calc_iversekinematics( 0.20, -0.63, -90.0*DEG2RAD); //solve IK to get _q[1]~[3]
+            
                 
+                //    _q_goal_forward[0] = Scara_forward._x_ee_goal_local[0];
+                //    _q_goal_forward[1] = Scara_forward._x_ee_goal_local[1];
+                //    _q_goal_forward[2] = Scara_forward._x_ee_goal_local[2];
 
-                if(_target_position_from_vision[1] > -0.40)
-                {
-                    _q_goal_forward[0] = -18.0*DEG2RAD; //q0
-		            _q_goal_forward[1] = -90.0*DEG2RAD; //q1
-		            _q_goal_forward[2] = -25.0*DEG2RAD; //q2
-                }
-                else if(_target_position_from_vision[1] <= -0.40)
-                {
-                    _q_goal_forward[0] = Scara_forward._x_ee_goal_local[0];
-                    _q_goal_forward[1] = Scara_forward._x_ee_goal_local[1];
-                    _q_goal_forward[2] = Scara_forward._x_ee_goal_local[2];
-                }
+
+                 if(_target_position_from_vision[0] < 0.0)
+                 {
+                     _q_goal_forward[0] = 30.0*DEG2RAD; //q0
+		             _q_goal_forward[1] = -135.0*DEG2RAD; //q1
+		             _q_goal_forward[2] = 15.0*DEG2RAD; //q2
+                 }
+                 else if(_target_position_from_vision[0] >= 0.0)
+                 {
+                     _q_goal_forward[0] = Scara_forward._x_ee_goal_local[0];
+                     _q_goal_forward[1] = Scara_forward._x_ee_goal_local[1];
+                     _q_goal_forward[2] = Scara_forward._x_ee_goal_local[2];
+                 }
                 _height_goal_linear = 1.45 - 1.187;
                 //_height_goal_linear = 1.45 - 1.217;
 
@@ -893,35 +999,35 @@ void CUController::boxlane_initial_desired(int tray_num)
     {
         _q_goal_forward[0] = -9.12*DEG2RAD; //q0
 		_q_goal_forward[1] = 147.43*DEG2RAD; //q1
-		_q_goal_forward[2] = 43.97*DEG2RAD; //q2
-		_height_goal_linear = 1.45 - 0.462; //z
+		_q_goal_forward[2] = 41.97*DEG2RAD; //q2
+		_height_goal_linear = 1.45 - 0.453; //z
     }
     else if(tray_num == 2)
     {
         _q_goal_forward[0] = -9.12*DEG2RAD; //q0
 		_q_goal_forward[1] = 147.43*DEG2RAD; //q1
-		_q_goal_forward[2] = 43.97*DEG2RAD; //q2
-		_height_goal_linear = 1.45 - 0.707; //z 
+		_q_goal_forward[2] = 41.97*DEG2RAD; //q2
+		_height_goal_linear = 1.45 - 0.702; //z 
     }
     else if(tray_num == 3)
     {
         _q_goal_forward[0] = -9.12*DEG2RAD; //q0
 		_q_goal_forward[1] = 147.43*DEG2RAD; //q1
-		_q_goal_forward[2] = 43.97*DEG2RAD; //q2
-		_height_goal_linear = 1.45 - 0.948; //z  
+		_q_goal_forward[2] = 41.97*DEG2RAD; //q2
+		_height_goal_linear = 1.45 - 0.944; //z  
     }
     else if(tray_num == 4)
     {
         _q_goal_forward[0] = -9.12*DEG2RAD; //q0
 		_q_goal_forward[1] = 147.43*DEG2RAD; //q1
-		_q_goal_forward[2] = 43.97*DEG2RAD; //q2
-		_height_goal_linear = 1.45 - 1.189; //z
+		_q_goal_forward[2] = 41.97*DEG2RAD; //q2
+		_height_goal_linear = 1.45 - 1.186; //z
     }
     else if(tray_num == 5)
     {
         _q_goal_forward[0] = -9.12*DEG2RAD; //q0
 		_q_goal_forward[1] = 147.43*DEG2RAD; //q1
-		_q_goal_forward[2] = 43.97*DEG2RAD; //q2
+		_q_goal_forward[2] = 41.97*DEG2RAD; //q2
 		_height_goal_linear = 1.45 - 1.438; //z
     }
     else if(tray_num == 6)
@@ -1011,14 +1117,46 @@ void CUController::boxlane_initial_desired(int tray_num)
 
 void CUController::boxlane_table_desired(int tray_num)
 {
-
-    
+    /*
+    if(tray_num == 1)
+    {
+        _q_goal_forward[0] = -9.12*DEG2RAD; //q0
+		_q_goal_forward[1] = 147.43*DEG2RAD; //q1
+		_q_goal_forward[2] = 41.97*DEG2RAD; //q2
+		_height_goal_linear = 1.45 - 0.453; //z
+    }
+    else if(tray_num == 2)
+    {
+        _q_goal_forward[0] = -9.12*DEG2RAD; //q0
+		_q_goal_forward[1] = 147.43*DEG2RAD; //q1
+		_q_goal_forward[2] = 41.97*DEG2RAD; //q2
+		_height_goal_linear = 1.45 - 0.702; //z 
+    }
+    else if(tray_num == 3)
+    {
+        _q_goal_forward[0] = -9.12*DEG2RAD; //q0
+		_q_goal_forward[1] = 147.43*DEG2RAD; //q1
+		_q_goal_forward[2] = 41.97*DEG2RAD; //q2
+		_height_goal_linear = 1.45 - 0.944; //z  
+    }
+    else if(tray_num == 4)
+    {
+        _q_goal_forward[0] = -9.12*DEG2RAD; //q0
+		_q_goal_forward[1] = 147.43*DEG2RAD; //q1
+		_q_goal_forward[2] = 41.97*DEG2RAD; //q2
+		_height_goal_linear = 1.45 - 1.186; //z
+    }
+    */
     if(tray_num == 1)
     {
         _q_goal_forward[0] = -3.21*DEG2RAD; //q0
 		_q_goal_forward[1] = 148.45*DEG2RAD; //q1
 		_q_goal_forward[2] = 38.07*DEG2RAD; //q2
-		_height_goal_linear = 1.45 - 0.462; //z
+
+        // _q_goal_forward[0] = -9.12*DEG2RAD; //q0
+		// _q_goal_forward[1] = 147.43*DEG2RAD; //q1
+		// _q_goal_forward[2] = 41.97*DEG2RAD; //q2
+		_height_goal_linear = 1.45 - 0.453; //z
         _check_table[0] = true;
     }
     else if(tray_num == 2)
@@ -1026,7 +1164,7 @@ void CUController::boxlane_table_desired(int tray_num)
         _q_goal_forward[0] = -3.21*DEG2RAD; //q0
 		_q_goal_forward[1] = 148.45*DEG2RAD; //q1
 		_q_goal_forward[2] = 38.07*DEG2RAD; //q2
-		_height_goal_linear = 1.45 - 0.707; //z 
+		_height_goal_linear = 1.45 - 0.702; //z 
         _check_table[1] = true;
     }
     else if(tray_num == 3)
@@ -1034,22 +1172,19 @@ void CUController::boxlane_table_desired(int tray_num)
         _q_goal_forward[0] = -3.21*DEG2RAD; //q0
 		_q_goal_forward[1] = 148.45*DEG2RAD; //q1
 		_q_goal_forward[2] = 38.07*DEG2RAD; //q2
-		_height_goal_linear = 1.45 - 0.948; //z 
+		_height_goal_linear = 1.45 - 0.944; //z 0.948
         _check_table[2] = true;
         
-        //_q_goal_forward[0] = -7.25*DEG2RAD; //q0
-		//_q_goal_forward[1] = 148.47*DEG2RAD; //q1
-		//_q_goal_forward[2] = 38.79*DEG2RAD; //q2
-		//_height_goal_linear = 1.45 - 0.934; //z 
     }
     else if(tray_num == 4)
     {
         _q_goal_forward[0] = -3.21*DEG2RAD; //q0
 		_q_goal_forward[1] = 148.45*DEG2RAD; //q1
 		_q_goal_forward[2] = 38.07*DEG2RAD; //q2
-		_height_goal_linear = 1.45 - 1.189; //z
+		_height_goal_linear = 1.45 - 1.186; //z
         _check_table[3] = true;
     }
+    
     else if(tray_num == 5)
     {
         _q_goal_forward[0] = -9.12*DEG2RAD; //q0
