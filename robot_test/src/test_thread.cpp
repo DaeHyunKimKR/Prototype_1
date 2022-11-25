@@ -174,32 +174,7 @@ void servoCallback(const std_msgs::Bool::ConstPtr& servo_msg)
 //   sensor_tray_front[1] = tray_sensor_state->data[1];
 // }
 
-void *ros_com(void *data)
-{
-  while(ros::ok())
-  {
-    ros::NodeHandle nh_wheels;
-    ros::NodeHandle nh_joy;
-    //ros::NodeHandle nh_scara;
-    ros::NodeHandle nh_scara_front;
-    ros::NodeHandle nh_scara_back;
-    ros::NodeHandle nh_linear;
-    ros::NodeHandle nh_task_cmd;
-    ros::NodeHandle nh_servo;
-    //ros::NodeHandle nh_tray_front;
-    
-    ros::Subscriber sub = nh_wheels.subscribe("cmd_vel",10,velCallback);
-    ros::Subscriber sub2 = nh_joy.subscribe("joy", 10, JoystickCallback);
-    //ros::Subscriber sub3 = nh_scara.subscribe("/scara_status1",10,scaraFrontCallback);
-    ros::Subscriber sub3 = nh_scara_front.subscribe("/scara_status1",10,scaraFrontCallback);
-    ros::Subscriber sub4 = nh_scara_back.subscribe("/scara_status2",10,scaraBackCallback);
-    ros::Subscriber sub5 = nh_linear.subscribe("/linear_status",10,linearCallback);
-    ros::Subscriber sub6 = nh_servo.subscribe("/stop/request",1,servoCallback);
-    //ros::Subscriber sub7 = nh_tray_front.subscribe("sensorStatus",10,trayFrontCallback);
 
-    ros::spin();
-  }
-}
 
 void initialize()
 {
@@ -238,28 +213,54 @@ void initialize()
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "subscriber");
-  pthread_t thread1, thread2;
   struct timespec ts;
   struct timespec ts2;
   clock_gettime(CLOCK_MONOTONIC, &ts);
   clock_gettime(CLOCK_MONOTONIC, &ts2);
   int start_time = ts2.tv_sec;
-  ros::NodeHandle n_;
-  ros::Publisher pub_ = n_.advertise<std_msgs::Float32MultiArray>("velocity", 1000);
-  ros::NodeHandle n_scara_front;
-  ros::Publisher scara_front_pub = n_scara_front.advertise<scara_control::Scara_cmd>("/scara_control1", 1000);
-  ros::NodeHandle n_scara_back;
-  ros::Publisher scara_back_pub = n_scara_back.advertise<scara_control::Scara_cmd>("/scara_control2", 1000);
-  ros::NodeHandle n_linear;
-  ros::Publisher linear_pub = n_linear.advertise<linear_control::linear_cmd>("/linear_control", 100);
 
+
+
+  ros::NodeHandle n_;
+  ros::NodeHandle n_scara_front;
+  ros::NodeHandle n_scara_back;
+  ros::NodeHandle n_linear;
   ros::NodeHandle n_tray_front_pub;
+  ros::NodeHandle nh_data_msgs;
+
+  ros::Publisher pub_ = n_.advertise<std_msgs::Float32MultiArray>("velocity", 1000);
+  ros::Publisher scara_front_pub = n_scara_front.advertise<scara_control::Scara_cmd>("/scara_control1", 1000);
+  ros::Publisher scara_back_pub = n_scara_back.advertise<scara_control::Scara_cmd>("/scara_control2", 1000);
+  ros::Publisher linear_pub = n_linear.advertise<linear_control::linear_cmd>("/linear_control", 100);
   ros::Publisher tray_front_pub = n_tray_front_pub.advertise<std_msgs::Float64MultiArray>("motorCommand", 100);
   ros::Subscriber sub_taskcmd_ = n_scara_front.subscribe("/arm/cmd",1,taskCallback);
-  ros::NodeHandle nh_data_msgs;
   ros::Publisher data_pub = nh_data_msgs.advertise<robot_test::robot_data>("/arm_info", 1);
+  ros::Publisher pub_taskstate_ = n_.advertise<std_msgs::Int32>("/arm_status", 1000);
+  //pub_taskstate_ = n_.advertise<std_msgs::Int32>("task_state", 1000); 
 
+
+
+  ros::NodeHandle nh_wheels;
+  ros::NodeHandle nh_joy;
+  //ros::NodeHandle nh_scara;
+  ros::NodeHandle nh_scara_front;
+  ros::NodeHandle nh_scara_back;
+  ros::NodeHandle nh_linear;
+  ros::NodeHandle nh_task_cmd;
+  ros::NodeHandle nh_servo;
+  //ros::NodeHandle nh_tray_front;
   
+  ros::Subscriber sub = nh_wheels.subscribe("cmd_vel",10,velCallback);
+  ros::Subscriber sub2 = nh_joy.subscribe("joy", 10, JoystickCallback);
+  //ros::Subscriber sub3 = nh_scara.subscribe("/scara_status1",10,scaraFrontCallback);
+  ros::Subscriber sub3 = nh_scara_front.subscribe("/scara_status1",10,scaraFrontCallback);
+  ros::Subscriber sub4 = nh_scara_back.subscribe("/scara_status2",10,scaraBackCallback);
+  ros::Subscriber sub5 = nh_linear.subscribe("/linear_status",10,linearCallback);
+  ros::Subscriber sub6 = nh_servo.subscribe("/stop/request",1,servoCallback);
+  //ros::Subscriber sub7 = nh_tray_front.subscribe("sensorStatus",10,trayFrontCallback);
+  
+
+
   std_msgs::Float32MultiArray velocity;
   scara_control::Scara_cmd scara_forward_msgs;
   scara_control::Scara_cmd scara_backward_msgs;
@@ -267,15 +268,12 @@ int main(int argc, char **argv)
   std_msgs::Float64MultiArray data_msgs;
   //std_msgs::Float64MultiArray tray_front_msgs;
 
-  ros::Publisher pub_taskstate_ = n_.advertise<std_msgs::Int32>("/arm_status", 1000);
-  //pub_taskstate_ = n_.advertise<std_msgs::Int32>("task_state", 1000); 
+
+
 
 
 
   initialize(); //initialize variables 
-
-  //////////////// ROS
-  pthread_create(&thread1, NULL, &ros_com, (void*) &ctime); //for ros
 
   //////////////// initialize communication
   wheel.Open_port();
@@ -304,81 +302,8 @@ int main(int argc, char **argv)
   linear_msgs.node.push_back(1);
   linear_msgs.node.push_back(2);
   linear_pub.publish(linear_msgs);
+  
 
-  int cnt_timer = 0;  
-  while(1)
-  {
-      scara_forward_msgs.cmd = "on";
-      scara_forward_msgs.node.clear();
-      scara_forward_msgs.node.push_back(1);
-      scara_forward_msgs.node.push_back(2);
-      scara_forward_msgs.node.push_back(3);
-      scara_front_pub.publish(scara_forward_msgs);
-
-      scara_backward_msgs.cmd = "on";                                                                                                                               
-      scara_backward_msgs.node.clear();
-      scara_backward_msgs.node.push_back(4);
-      scara_backward_msgs.node.push_back(5);
-      scara_backward_msgs.node.push_back(6);
-      scara_back_pub.publish(scara_backward_msgs);
-
-      while(ts.tv_nsec >= SEC_IN_NSEC)
-      {
-            ts.tv_sec++;
-            ts.tv_nsec -= SEC_IN_NSEC;
-      }
-      clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
-      ts.tv_nsec += 1000000000;
-      if(cnt_timer >= 1) //1 sec
-      {
-         cnt_timer =0;
-         break;
-      }
-      cnt_timer++;
-  }  
-
-  cnt_timer = 0;  
-  while(1)
-  {
-    scara_forward_msgs.cmd = "status";
-    scara_forward_msgs.node.clear();
-    scara_forward_msgs.node.push_back(1);
-    scara_forward_msgs.node.push_back(2);
-    scara_forward_msgs.node.push_back(3);
-    scara_front_pub.publish(scara_forward_msgs);
-
-    scara_backward_msgs.cmd = "status";
-    scara_backward_msgs.node.clear();
-    scara_backward_msgs.node.push_back(4);
-    scara_backward_msgs.node.push_back(5);
-    scara_backward_msgs.node.push_back(6);
-    scara_back_pub.publish(scara_backward_msgs);
-
-    linear_msgs.cmd = "status";
-    linear_msgs.node.clear();
-    linear_msgs.node.push_back(1);
-    linear_msgs.node.push_back(2);
-    linear_pub.publish(linear_msgs);
-
-
-
-    
-
-      while(ts.tv_nsec >= SEC_IN_NSEC)
-      {
-            ts.tv_sec++;
-            ts.tv_nsec -= SEC_IN_NSEC;
-      }
-      clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
-      ts.tv_nsec += 1000000000;
-      if(cnt_timer >= 5) //5 sec
-      {
-         cnt_timer =0;
-         break;
-      }
-      cnt_timer++;
-  }
-    
   cout << "Robot is Ready to Move!" << endl<<endl;
 
   //////////////// Control loop
@@ -401,78 +326,6 @@ int main(int argc, char **argv)
     time_tmp = ts2.tv_sec - start_time;
     now_time = time_tmp + ts2.tv_nsec / 1000000000.0;
 
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////// DATA MESSAGES /////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-    robot_test::robot_data robot_data;
-    
-    robot_data.robot_state = state__[robot._CurrentState];
-    // cout << robot._CurrentState << endl<<endl;
-
-    // robot_data.joint1 = robot._q_goal_forward[0];
-    // robot_data.joint2 = robot._q_goal_forward[1];
-    // robot_data.joint3 = robot._q_goal_forward[2];
-
-    robot_data.joint1 = jointangle_scara_front[0];
-    robot_data.joint2 = jointangle_scara_front[1];
-    robot_data.joint3 = jointangle_scara_front[2];
-    
-
-    robot_data.height = position_linear[0];
-    robot_data.tray = tray_front.tray_status;
-    //scara_front.update_forward_kinematics();
-    // robot_data.front_pos_x = robot._ee_pos[0];
-    // robot_data.front_pos_y = robot._ee_pos[1];
-    // robot_data.front_pos_a = robot._ee_pos[2];
-
-    FKforPos(jointangle_scara_front);
-    robot_data.front_pos_x = _ee_pos[0];
-    robot_data.front_pos_y = _ee_pos[1];
-    robot_data.front_pos_z = position_linear[0];
-    robot_data.front_pos_a = _ee_pos[2];
-
-    robot_data.table_status_1 = robot._table_status[0];
-    robot_data.table_status_2 = robot._table_status[1];
-    robot_data.table_status_3 = robot._table_status[2];
-    robot_data.table_status_4 = robot._table_status[3];
-    robot_data.table_status_5 = robot._table_status[4];
-    robot_data.table_status_6 = robot._table_status[5];
-    robot_data.table_status_7 = robot._table_status[6];
-    robot_data.table_status_8 = robot._table_status[7];
-    robot_data.table_status_9 = robot._table_status[8];
-    robot_data.table_status_10 = robot._table_status[9];
-    robot_data.table_status_11 = robot._table_status[10];
-    robot_data.table_status_12 = robot._table_status[11];
-    robot_data.table_status_13 = robot._table_status[12];
-    robot_data.table_status_14 = robot._table_status[13];
-    robot_data.table_status_15 = robot._table_status[14];
-    robot_data.table_status_16 = robot._table_status[15];
-
-    robot_data.Error_Code = error_code_forward;
-    
-
-    data_pub.publish(robot_data);
-
-
-
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Error check
     if( jointangle_scara_front[0] > -91 && jointangle_scara_front[0] < 91 )
@@ -512,6 +365,7 @@ int main(int argc, char **argv)
     }
     
   // Emergency Stop
+  /*
     if(servo_ctrl == false)
     {
       scara_forward_msgs.cmd = "on";
@@ -532,8 +386,8 @@ int main(int argc, char **argv)
       linear_msgs.node.push_back(2);
       linear_pub.publish(linear_msgs);
 
-      wheel.Open_port();
-      tray_front.Open_port();
+      wheel.Servo_on();
+      tray_front.Control_on();
     }
     else if(servo_ctrl == true)
     {
@@ -549,7 +403,7 @@ int main(int argc, char **argv)
       scara_backward_msgs.node.push_back(5);
       scara_backward_msgs.node.push_back(6);
       scara_back_pub.publish(scara_backward_msgs);
-      linear_msgs.cmd = "on";
+      linear_msgs.cmd = "off";
       linear_msgs.node.clear();
       linear_msgs.node.push_back(1);
       linear_msgs.node.push_back(2);
@@ -558,6 +412,7 @@ int main(int argc, char **argv)
       wheel.Servo_off();
       tray_front.Control_off();
     }
+  */
 
   // for wheel control
 	  if(mode == 0)
@@ -695,6 +550,7 @@ int main(int argc, char **argv)
     {
         if(robot.tray_forward._velocity_cmd > 0.001)
         {
+          // tray_front.Sensor_Based(1);
           tray_front.Velocity_Command(1);
         }
         else if(robot.tray_forward._velocity_cmd < -0.001)
@@ -724,6 +580,68 @@ int main(int argc, char **argv)
     }
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// DATA MESSAGES /////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    robot_test::robot_data robot_data;
+    
+    robot_data.robot_state = state__[robot._CurrentState];
+    // cout << robot._CurrentState << endl<<endl;
+
+    // robot_data.joint1 = robot._q_goal_forward[0];
+    // robot_data.joint2 = robot._q_goal_forward[1];
+    // robot_data.joint3 = robot._q_goal_forward[2];
+
+    robot_data.joint1 = jointangle_scara_front[0];
+    robot_data.joint2 = jointangle_scara_front[1];
+    robot_data.joint3 = jointangle_scara_front[2];
+    
+
+    robot_data.height = position_linear[0];
+    robot_data.tray = tray_front.tray_status;
+    //scara_front.update_forward_kinematics();
+    // robot_data.front_pos_x = robot._ee_pos[0];
+    // robot_data.front_pos_y = robot._ee_pos[1];
+    // robot_data.front_pos_a = robot._ee_pos[2];
+
+    FKforPos(jointangle_scara_front);
+    robot_data.front_pos_x = _ee_pos[0];
+    robot_data.front_pos_y = _ee_pos[1];
+    robot_data.front_pos_z = position_linear[0];
+    robot_data.front_pos_a = _ee_pos[2];
+
+    robot_data.table_status_1 = robot._table_status[0];
+    robot_data.table_status_2 = robot._table_status[1];
+    robot_data.table_status_3 = robot._table_status[2];
+    robot_data.table_status_4 = robot._table_status[3];
+    robot_data.table_status_5 = robot._table_status[4];
+    robot_data.table_status_6 = robot._table_status[5];
+    robot_data.table_status_7 = robot._table_status[6];
+    robot_data.table_status_8 = robot._table_status[7];
+    robot_data.table_status_9 = robot._table_status[8];
+    robot_data.table_status_10 = robot._table_status[9];
+    robot_data.table_status_11 = robot._table_status[10];
+    robot_data.table_status_12 = robot._table_status[11];
+    robot_data.table_status_13 = robot._table_status[12];
+    robot_data.table_status_14 = robot._table_status[13];
+    robot_data.table_status_15 = robot._table_status[14];
+    robot_data.table_status_16 = robot._table_status[15];
+
+    // robot_data.Error_Code = error_code_forward;
+    
+
+    data_pub.publish(robot_data);
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 
     //publish ros msgs
     
@@ -747,10 +665,10 @@ int main(int argc, char **argv)
     
     // cout << "\033[2J\033[1;1H";
 
+    ros::spinOnce();
 
   }
-  pthread_join(thread1,NULL);
-//  pthread_join(thread2,NULL);
+  
   return (0);
 }
 
