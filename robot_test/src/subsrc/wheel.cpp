@@ -272,6 +272,15 @@ void Cwheel::Open_port()
   usleep(20000);
 }
 
+void Cwheel::Servo_on()
+{
+  write(_port, _servo,sizeof(_servo));
+  usleep(20000);
+  tcflush(_port, TCIOFLUSH);
+  write(_port, _REQ_DATA, sizeof(_REQ_DATA));
+  Read_encoder();
+}
+
 void Cwheel::Servo_off()
 {
   write(_port, _TQ_off,sizeof(_TQ_off));
@@ -433,13 +442,17 @@ case 1:
     LeftVel = -30;
       if(axes_msg[6] == 1)
       {
-        RightVel = -15;
-        LeftVel = -45;
+        // RightVel = -15;
+        // LeftVel = -45;
+        RightVel = -45;
+        LeftVel = -15;
       }
       else if ( axes_msg[6] == -1)
       {
-        RightVel = -45;
-        LeftVel = -15;
+        // RightVel = -45;
+        // LeftVel = -15;
+        RightVel = -15;
+        LeftVel = -45;
       }
   }
 ////////STOP////////////////
@@ -483,13 +496,17 @@ if(axes_msg[7] == 1)
     LeftVel = -45;
       if(axes_msg[6] == 1)
       {
-        RightVel = -30;
-        LeftVel = -60;
+        // RightVel = -30;
+        // LeftVel = -60;
+        RightVel = -60;
+        LeftVel = -30;
       }
       else if ( axes_msg[6] == -1)
       {
-        RightVel = -60;
-        LeftVel = -30;
+        // RightVel = -60;
+        // LeftVel = -30;
+        RightVel = -30;
+        LeftVel = -60;
       }
   }
 ////////STOP////////////////
@@ -533,13 +550,17 @@ if(axes_msg[7] == 1)
     LeftVel = -10;
       if(axes_msg[6] == 1)
       {
-        RightVel = -5;
-        LeftVel = -10;
+        // RightVel = -5;
+        // LeftVel =10-10;
+        RightVel = -10;
+        LeftVel = -5;
       }
       else if ( axes_msg[6] == -1)
       {
-        RightVel = -10;
-        LeftVel = -5;
+        // RightVel = -10;
+        // LeftVel = -5;
+        RightVel = -5;
+        LeftVel = -10;
       }
   }
 ////////STOP////////////////
